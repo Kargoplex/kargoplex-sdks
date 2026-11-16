@@ -30,8 +30,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-      # No lockfile is committed yet, so `npm ci` is not available.
-      - run: npm install --no-audit --no-fund
+      - run: npm ci
       - run: npm run build
       - run: npm test
 
