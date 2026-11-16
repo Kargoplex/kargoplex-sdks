@@ -1,0 +1,52 @@
+{
+  "name": "@kargoplex/sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript/JavaScript SDK for the Kargoplex public API.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kargoplex/kargoplex-sdks.git",
+    "directory": "ts"
+  },
+  "homepage": "https://kargoplex.com/developers",
+  "bugs": {
+    "url": "https://github.com/Kargoplex/kargoplex-sdks/issues"
+  },
+  "keywords": [
+    "kargoplex",
+    "freight",
+    "logistics",
+    "api",
+    "sdk"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsc",
+    "pretest": "tsc",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

@@ -1,0 +1,13 @@
+node_modules/
+ts/dist/
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
+.pytest_cache/
+python/dist/
+python/build/
+*.egg-info/
+.venv/
+.DS_Store
+.env
+.env.*
