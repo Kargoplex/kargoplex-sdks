@@ -137,13 +137,13 @@ cd python && PYTHONPATH=. python -m pytest
 Both packages share one version. Bump `version` in `ts/package.json`, `python/pyproject.toml`, `VERSION` in `ts/src/client.ts` and `python/kargoplex/client.py`, then update `CHANGELOG.md`, merge, and push a tag:
 
 ```bash
-git tag v0.1.0 && git push origin v0.1.0
+git tag v0.1.1 && git push origin v0.1.1
 ```
 
-The `Release` workflow runs on the tag, waits for a reviewer to approve the `release` environment, then publishes to npm (with provenance) and PyPI using trusted publishing (OIDC). No token is stored in the repository. One-time setup:
+The `Release` workflow runs on the tag, waits for a reviewer to approve the `release` environment, then publishes to PyPI and stages the npm version (with provenance), using trusted publishing (OIDC). No token is stored in the repository. The npm version goes live only after a maintainer approves it on npmjs.com (Staged Packages tab, with 2FA). One-time setup:
 
 1. In the GitHub repo, create an environment named `release` with a required reviewer.
-2. On npmjs.com, add a trusted publisher for `@kargoplex/sdk`: this repo, workflow `release.yml`, environment `release`.
+2. On npmjs.com, add a trusted publisher for `@kargoplex/sdk`: this repo, workflow `release.yml`, environment `release`, with only `npm stage publish` allowed.
 3. On pypi.org, add a trusted publisher for `kargoplex`: this repo, workflow `release.yml`, environment `release`.
 
 ## Licence

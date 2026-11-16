@@ -178,3 +178,13 @@ test("paginate starts from params.page", async () => {
 test("apiKey is required", () => {
   assert.throws(() => new Kargoplex({}), /apiKey/);
 });
+
+test("trailing slashes on baseUrl are removed, and a long run of them is fast", async () => {
+  const { client, fetch } = make([ok({ items: [], total: 0, page: 1, limit: 20 })], { baseUrl: "https://api.example.test/v1///" });
+  await client.parties.list();
+  assert.ok(fetch.calls[0].url.startsWith("https://api.example.test/v1/"));
+  assert.ok(!fetch.calls[0].url.startsWith("https://api.example.test/v1//"));
+  const started = Date.now();
+  new Kargoplex({ apiKey: "k", fetch: async () => ok({}), baseUrl: "/".repeat(50000) + "x" });
+  assert.ok(Date.now() - started < 200);
+});

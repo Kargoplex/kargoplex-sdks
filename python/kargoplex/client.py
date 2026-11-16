@@ -18,7 +18,7 @@ from ._generated import (
     QuotesResource,
 )
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 DEFAULT_BASE_URL = "https://server.kargoplex.com/kargoplex/api/public/v1"
 
 _BASE_BACKOFF = 0.5
