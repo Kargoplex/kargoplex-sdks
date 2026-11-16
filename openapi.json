@@ -1,0 +1,3582 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Kargoplex API",
+    "version": "1.1.0",
+    "description": "The Kargoplex public API: parties, quotes, jobs, document requests and invoices for your own company. Authenticate with an API key from Settings → Developers (`Authorization: Bearer kp_live_…`). Each key carries scopes, and each plan sets calls a minute per company and calls a month. Every response is `{ success, data }` or `{ success: false, error, code }`.",
+    "contact": {
+      "name": "Kargoplex",
+      "url": "https://kargoplex.com/developers"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://server.kargoplex.com/kargoplex/api/public/v1",
+      "description": "Production"
+    }
+  ],
+  "security": [
+    {
+      "apiKey": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Parties",
+      "description": "Customers, consignees, agents and carriers in your directory."
+    },
+    {
+      "name": "Quotes",
+      "description": "Quotes to your customers."
+    },
+    {
+      "name": "Jobs",
+      "description": "Your jobs (shipments you run)."
+    },
+    {
+      "name": "Document requests",
+      "description": "Requests for documents, with an upload link."
+    },
+    {
+      "name": "Invoices",
+      "description": "Your customer invoices (read only)."
+    }
+  ],
+  "paths": {
+    "/parties": {
+      "get": {
+        "operationId": "parties_list",
+        "tags": [
+          "Parties"
+        ],
+        "summary": "List parties",
+        "description": "List your parties (customers, consignees, agents, carriers). Filter by q, role, status; paginate with page/limit.\n\nRequires the `parties:read` scope and the plan's `apiRead` feature.",
+        "security": [
+          {
+            "apiKey": [
+              "parties:read"
+            ]
+          }
+        ],
+        "x-kargoplex-scope": "parties:read",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "CUSTOMER",
+                "SHIPPER",
+                "CONSIGNEE",
+                "NOTIFY",
+                "AGENT",
+                "CARRIER",
+                "TRUCKER",
+                "BROKER",
+                "WAREHOUSE",
+                "OTHER"
+              ]
+            }
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "ACTIVE",
+                "ARCHIVED"
+              ]
+            }
+          },
+          {
+            "name": "linked",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "description": "The resource or page (see the guide for its fields)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "name: Required",
+                  "detail": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, revoked or expired API key (one message for all).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_INVALID",
+                  "error": "Invalid, revoked or expired API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The plan's monthly API calls are used up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "ENTITLEMENT_LIMIT_REACHED",
+                  "error": "You've reached your API call limit."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks this scope, or the plan lacks the API feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_SCOPE_REQUIRED",
+                  "error": "This API key does not have the 'parties:read' scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found among your company's records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many calls: the per-key or the per-company limit a minute. Wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "RATE_LIMITED",
+                  "error": "Too many requests for this API key — slow down"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "parties_create",
+        "tags": [
+          "Parties"
+        ],
+        "summary": "Create a party",
+        "description": "Create a party. Only `name` is required.\n\nRequires the `parties:write` scope and the plan's `apiWrite` feature.",
+        "security": [
+          {
+            "apiKey": [
+              "parties:write"
+            ]
+          }
+        ],
+        "x-kargoplex-scope": "parties:write",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "enum": [
+                      "COMPANY",
+                      "PERSON"
+                    ]
+                  },
+                  "roles": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "CUSTOMER",
+                        "SHIPPER",
+                        "CONSIGNEE",
+                        "NOTIFY",
+                        "AGENT",
+                        "CARRIER",
+                        "TRUCKER",
+                        "BROKER",
+                        "WAREHOUSE",
+                        "OTHER"
+                      ]
+                    }
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "legalName": {
+                    "type": "string"
+                  },
+                  "website": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "contacts": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "_id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "isPrimary": {
+                          "type": "boolean"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "addresses": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "_id": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "enum": [
+                            "BILLING",
+                            "OFFICE",
+                            "PICKUP",
+                            "DELIVERY"
+                          ]
+                        },
+                        "line1": {
+                          "type": "string"
+                        },
+                        "line2": {
+                          "type": "string"
+                        },
+                        "city": {
+                          "type": "string"
+                        },
+                        "state": {
+                          "type": "string"
+                        },
+                        "postalCode": {
+                          "type": "string"
+                        },
+                        "countryCode": {
+                          "type": "string"
+                        },
+                        "isDefault": {
+                          "type": "boolean"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "taxIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "VAT",
+                            "GST",
+                            "HST",
+                            "TIN",
+                            "EIN",
+                            "BN",
+                            "EORI",
+                            "OTHER"
+                          ]
+                        },
+                        "value": {
+                          "type": "string"
+                        },
+                        "countryCode": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "billing": {
+                    "type": "object",
+                    "properties": {
+                      "currency": {
+                        "type": "string"
+                      },
+                      "paymentTermsDays": {
+                        "type": "integer"
+                      },
+                      "creditLimit": {
+                        "type": "object",
+                        "properties": {
+                          "currency": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "currency",
+                          "value"
+                        ]
+                      },
+                      "onHold": {
+                        "type": "boolean"
+                      },
+                      "taxCodeId": {
+                        "type": "string"
+                      },
+                      "withholdingTaxCodeId": {
+                        "type": "string"
+                      },
+                      "statementMonthly": {
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "groupIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "description": "The resource or page (see the guide for its fields)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "name: Required",
+                  "detail": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, revoked or expired API key (one message for all).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_INVALID",
+                  "error": "Invalid, revoked or expired API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The plan's monthly API calls are used up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "ENTITLEMENT_LIMIT_REACHED",
+                  "error": "You've reached your API call limit."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks this scope, or the plan lacks the API feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_SCOPE_REQUIRED",
+                  "error": "This API key does not have the 'parties:write' scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found among your company's records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many calls: the per-key or the per-company limit a minute. Wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "RATE_LIMITED",
+                  "error": "Too many requests for this API key — slow down"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/{id}": {
+      "get": {
+        "operationId": "parties_get",
+        "tags": [
+          "Parties"
+        ],
+        "summary": "Get a party",
+        "description": "Get one party by id.\n\nRequires the `parties:read` scope and the plan's `apiRead` feature.",
+        "security": [
+          {
+            "apiKey": [
+              "parties:read"
+            ]
+          }
+        ],
+        "x-kargoplex-scope": "parties:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "description": "The resource or page (see the guide for its fields)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "name: Required",
+                  "detail": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, revoked or expired API key (one message for all).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_INVALID",
+                  "error": "Invalid, revoked or expired API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The plan's monthly API calls are used up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "ENTITLEMENT_LIMIT_REACHED",
+                  "error": "You've reached your API call limit."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks this scope, or the plan lacks the API feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_SCOPE_REQUIRED",
+                  "error": "This API key does not have the 'parties:read' scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found among your company's records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many calls: the per-key or the per-company limit a minute. Wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "RATE_LIMITED",
+                  "error": "Too many requests for this API key — slow down"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes": {
+      "get": {
+        "operationId": "quotes_list",
+        "tags": [
+          "Quotes"
+        ],
+        "summary": "List quotes",
+        "description": "List your quotes. Filter by status, customerPartyId, q, from/to; paginate with page/limit.\n\nRequires the `quotes:read` scope and the plan's `apiRead` feature.",
+        "security": [
+          {
+            "apiKey": [
+              "quotes:read"
+            ]
+          }
+        ],
+        "x-kargoplex-scope": "quotes:read",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "DRAFT",
+                "SENT",
+                "ACCEPTED",
+                "DECLINED",
+                "LOST",
+                "EXPIRED",
+                "WITHDRAWN"
+              ]
+            }
+          },
+          {
+            "name": "shipmentRequestId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sourceType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "MANUAL",
+                "RFQ",
+                "WEBSITE",
+                "MARKETPLACE",
+                "EMAIL",
+                "AI"
+              ]
+            }
+          },
+          {
+            "name": "customerPartyId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "description": "The resource or page (see the guide for its fields)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "name: Required",
+                  "detail": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, revoked or expired API key (one message for all).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_INVALID",
+                  "error": "Invalid, revoked or expired API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The plan's monthly API calls are used up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "ENTITLEMENT_LIMIT_REACHED",
+                  "error": "You've reached your API call limit."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks this scope, or the plan lacks the API feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_SCOPE_REQUIRED",
+                  "error": "This API key does not have the 'quotes:read' scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found among your company's records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many calls: the per-key or the per-company limit a minute. Wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "RATE_LIMITED",
+                  "error": "Too many requests for this API key — slow down"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "quotes_create",
+        "tags": [
+          "Quotes"
+        ],
+        "summary": "Create a draft quote",
+        "description": "Create a DRAFT quote for a customer party. Lines are priced by your pricing rules.\n\nRequires the `quotes:write` scope and the plan's `apiWrite` feature.",
+        "security": [
+          {
+            "apiKey": [
+              "quotes:write"
+            ]
+          }
+        ],
+        "x-kargoplex-scope": "quotes:write",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "customerPartyId": {
+                    "type": "string"
+                  },
+                  "contactName": {
+                    "type": "string"
+                  },
+                  "contactEmail": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "MANUAL",
+                          "RFQ",
+                          "WEBSITE",
+                          "MARKETPLACE",
+                          "EMAIL",
+                          "AI"
+                        ]
+                      },
+                      "shipmentRequestId": {
+                        "type": "string"
+                      },
+                      "websiteQuoteRequestId": {
+                        "type": "string"
+                      },
+                      "reference": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "lane": {
+                    "type": "object",
+                    "properties": {
+                      "origin": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      },
+                      "destination": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      },
+                      "transportMode": {
+                        "type": "string"
+                      },
+                      "loadType": {
+                        "type": "string"
+                      },
+                      "incoterm": {
+                        "type": "string"
+                      },
+                      "serviceLevel": {
+                        "type": "string"
+                      },
+                      "carrierName": {
+                        "type": "string"
+                      },
+                      "transitDays": {
+                        "type": "object",
+                        "properties": {
+                          "min": {
+                            "type": "number"
+                          },
+                          "max": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "cargo": {
+                    "type": "object",
+                    "properties": {
+                      "rows": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        }
+                      },
+                      "containerTypes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "containers": {
+                        "type": "number"
+                      },
+                      "commodity": {
+                        "type": "string"
+                      },
+                      "dangerousGoods": {
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "currency": {
+                    "type": "string"
+                  },
+                  "validFrom": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    ]
+                  },
+                  "validTo": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    ]
+                  },
+                  "lines": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "_id": {
+                          "type": "string"
+                        },
+                        "chargeCode": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "category": {
+                          "enum": [
+                            "FREIGHT",
+                            "ORIGIN",
+                            "DESTINATION",
+                            "SURCHARGE",
+                            "CUSTOMS",
+                            "INSURANCE",
+                            "STORAGE",
+                            "DISBURSEMENT",
+                            "PROFIT_SHARE",
+                            "OTHER"
+                          ]
+                        },
+                        "unit": {
+                          "type": "string",
+                          "enum": [
+                            "PER_KG",
+                            "PER_100KG",
+                            "PER_CBM",
+                            "PER_CONTAINER",
+                            "PER_SHIPMENT",
+                            "FLAT",
+                            "PER_LM",
+                            "PER_DAY",
+                            "PER_STOP",
+                            "PER_KM",
+                            "PER_MILE",
+                            "PER_PALLET",
+                            "PER_CWT",
+                            "PER_ULD"
+                          ]
+                        },
+                        "qtySource": {
+                          "type": "string",
+                          "enum": [
+                            "LOAD",
+                            "MANUAL"
+                          ]
+                        },
+                        "weightBasis": {
+                          "type": "string",
+                          "enum": [
+                            "CHARGEABLE",
+                            "GROSS"
+                          ]
+                        },
+                        "quantity": {
+                          "type": "number"
+                        },
+                        "buy": {
+                          "type": "object",
+                          "properties": {
+                            "source": {
+                              "enum": [
+                                "CATALOG",
+                                "MANUAL",
+                                "VENDOR"
+                              ]
+                            },
+                            "catalogId": {
+                              "type": "string"
+                            },
+                            "rateSheetId": {
+                              "type": "string"
+                            },
+                            "vendorPartyId": {
+                              "type": "string"
+                            },
+                            "priceBasis": {
+                              "enum": [
+                                "NET",
+                                "SELL"
+                              ]
+                            },
+                            "currency": {
+                              "type": "string"
+                            },
+                            "rate": {
+                              "type": "number"
+                            },
+                            "minimumCharge": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "currency",
+                            "rate"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "sellOverride": {
+                          "type": "object",
+                          "properties": {
+                            "amount": {
+                              "type": "number"
+                            },
+                            "reason": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "amount"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "uld": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            },
+                            "pivotKg": {
+                              "type": "number"
+                            },
+                            "overPivotRate": {
+                              "type": "number"
+                            },
+                            "chargeableKg": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "pivotKg",
+                            "chargeableKg"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "taxCodeId": {
+                          "type": "string"
+                        },
+                        "withholdingTaxCodeIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "hidden": {
+                          "type": "boolean"
+                        },
+                        "notes": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "description",
+                        "unit",
+                        "buy"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "customerNotes": {
+                    "type": "string"
+                  },
+                  "internalNotes": {
+                    "type": "string"
+                  },
+                  "terms": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "currency"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "description": "The resource or page (see the guide for its fields)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "name: Required",
+                  "detail": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, revoked or expired API key (one message for all).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_INVALID",
+                  "error": "Invalid, revoked or expired API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The plan's monthly API calls are used up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "ENTITLEMENT_LIMIT_REACHED",
+                  "error": "You've reached your API call limit."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks this scope, or the plan lacks the API feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_SCOPE_REQUIRED",
+                  "error": "This API key does not have the 'quotes:write' scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found among your company's records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many calls: the per-key or the per-company limit a minute. Wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "RATE_LIMITED",
+                  "error": "Too many requests for this API key — slow down"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes/{id}": {
+      "get": {
+        "operationId": "quotes_get",
+        "tags": [
+          "Quotes"
+        ],
+        "summary": "Get a quote",
+        "description": "Get one quote by id, with buy and sell lines.\n\nRequires the `quotes:read` scope and the plan's `apiRead` feature.",
+        "security": [
+          {
+            "apiKey": [
+              "quotes:read"
+            ]
+          }
+        ],
+        "x-kargoplex-scope": "quotes:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "description": "The resource or page (see the guide for its fields)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "name: Required",
+                  "detail": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, revoked or expired API key (one message for all).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_INVALID",
+                  "error": "Invalid, revoked or expired API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The plan's monthly API calls are used up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "ENTITLEMENT_LIMIT_REACHED",
+                  "error": "You've reached your API call limit."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks this scope, or the plan lacks the API feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_SCOPE_REQUIRED",
+                  "error": "This API key does not have the 'quotes:read' scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found among your company's records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many calls: the per-key or the per-company limit a minute. Wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "RATE_LIMITED",
+                  "error": "Too many requests for this API key — slow down"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes/{id}/send": {
+      "post": {
+        "operationId": "quotes_send",
+        "tags": [
+          "Quotes"
+        ],
+        "summary": "Send a draft quote",
+        "description": "Send a DRAFT quote: freezes the version the customer sees. Needs a visible line and a valid-until date.\n\nRequires the `quotes:write` scope and the plan's `apiWrite` feature.",
+        "security": [
+          {
+            "apiKey": [
+              "quotes:write"
+            ]
+          }
+        ],
+        "x-kargoplex-scope": "quotes:write",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "description": "The resource or page (see the guide for its fields)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "name: Required",
+                  "detail": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, revoked or expired API key (one message for all).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_INVALID",
+                  "error": "Invalid, revoked or expired API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The plan's monthly API calls are used up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "ENTITLEMENT_LIMIT_REACHED",
+                  "error": "You've reached your API call limit."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks this scope, or the plan lacks the API feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_SCOPE_REQUIRED",
+                  "error": "This API key does not have the 'quotes:write' scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found among your company's records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many calls: the per-key or the per-company limit a minute. Wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "RATE_LIMITED",
+                  "error": "Too many requests for this API key — slow down"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs": {
+      "get": {
+        "operationId": "jobs_list",
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "List jobs",
+        "description": "List your jobs. Filter by jobStatus, customerPartyId, q; paginate with page/limit.\n\nRequires the `jobs:read` scope and the plan's `apiRead` feature.",
+        "security": [
+          {
+            "apiKey": [
+              "jobs:read"
+            ]
+          }
+        ],
+        "x-kargoplex-scope": "jobs:read",
+        "parameters": [
+          {
+            "name": "jobStatus",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "OPEN",
+                "BOOKED",
+                "IN_TRANSIT",
+                "ARRIVED",
+                "DELIVERED",
+                "CLOSED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "customerPartyId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "description": "The resource or page (see the guide for its fields)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "name: Required",
+                  "detail": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, revoked or expired API key (one message for all).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_INVALID",
+                  "error": "Invalid, revoked or expired API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The plan's monthly API calls are used up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "ENTITLEMENT_LIMIT_REACHED",
+                  "error": "You've reached your API call limit."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks this scope, or the plan lacks the API feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_SCOPE_REQUIRED",
+                  "error": "This API key does not have the 'jobs:read' scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found among your company's records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many calls: the per-key or the per-company limit a minute. Wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "RATE_LIMITED",
+                  "error": "Too many requests for this API key — slow down"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/from-quote/{quoteId}": {
+      "post": {
+        "operationId": "jobs_create_from_quote",
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Open the job for an accepted quote",
+        "description": "Open the job for an ACCEPTED quote (idempotent: returns the existing job). Refused when the customer is over its credit limit or on hold.\n\nRequires the `jobs:write` scope and the plan's `apiWrite` feature.",
+        "security": [
+          {
+            "apiKey": [
+              "jobs:write"
+            ]
+          }
+        ],
+        "x-kargoplex-scope": "jobs:write",
+        "parameters": [
+          {
+            "name": "quoteId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "description": "The resource or page (see the guide for its fields)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "name: Required",
+                  "detail": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, revoked or expired API key (one message for all).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_INVALID",
+                  "error": "Invalid, revoked or expired API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The plan's monthly API calls are used up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "ENTITLEMENT_LIMIT_REACHED",
+                  "error": "You've reached your API call limit."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks this scope, or the plan lacks the API feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_SCOPE_REQUIRED",
+                  "error": "This API key does not have the 'jobs:write' scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found among your company's records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many calls: the per-key or the per-company limit a minute. Wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "RATE_LIMITED",
+                  "error": "Too many requests for this API key — slow down"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{id}": {
+      "get": {
+        "operationId": "jobs_get",
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Get a job",
+        "description": "Get one job by id.\n\nRequires the `jobs:read` scope and the plan's `apiRead` feature.",
+        "security": [
+          {
+            "apiKey": [
+              "jobs:read"
+            ]
+          }
+        ],
+        "x-kargoplex-scope": "jobs:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "description": "The resource or page (see the guide for its fields)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "name: Required",
+                  "detail": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, revoked or expired API key (one message for all).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_INVALID",
+                  "error": "Invalid, revoked or expired API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The plan's monthly API calls are used up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "ENTITLEMENT_LIMIT_REACHED",
+                  "error": "You've reached your API call limit."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks this scope, or the plan lacks the API feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_SCOPE_REQUIRED",
+                  "error": "This API key does not have the 'jobs:read' scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found among your company's records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many calls: the per-key or the per-company limit a minute. Wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "RATE_LIMITED",
+                  "error": "Too many requests for this API key — slow down"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/document-requests": {
+      "get": {
+        "operationId": "document_requests_list",
+        "tags": [
+          "Document requests"
+        ],
+        "summary": "List document requests",
+        "description": "List your document requests. Filter by status, subjectType, subjectId, toPartyId.\n\nRequires the `documents:read` scope and the plan's `apiRead` feature.",
+        "security": [
+          {
+            "apiKey": [
+              "documents:read"
+            ]
+          }
+        ],
+        "x-kargoplex-scope": "documents:read",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "OPEN",
+                "COMPLETE",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "subjectType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "JOB",
+                "CLEARANCE",
+                "QUOTE",
+                "PARTY_KYC",
+                "PARTNER_DD"
+              ]
+            }
+          },
+          {
+            "name": "subjectId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "toPartyId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "description": "The resource or page (see the guide for its fields)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "name: Required",
+                  "detail": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, revoked or expired API key (one message for all).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_INVALID",
+                  "error": "Invalid, revoked or expired API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The plan's monthly API calls are used up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "ENTITLEMENT_LIMIT_REACHED",
+                  "error": "You've reached your API call limit."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks this scope, or the plan lacks the API feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_SCOPE_REQUIRED",
+                  "error": "This API key does not have the 'documents:read' scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found among your company's records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many calls: the per-key or the per-company limit a minute. Wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "RATE_LIMITED",
+                  "error": "Too many requests for this API key — slow down"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "document_requests_create",
+        "tags": [
+          "Document requests"
+        ],
+        "summary": "Request documents from a party",
+        "description": "Ask a party for documents about a job/quote. Emails the upload link unless send is false.\n\nRequires the `documents:write` scope and the plan's `apiWrite` feature.",
+        "security": [
+          {
+            "apiKey": [
+              "documents:write"
+            ]
+          }
+        ],
+        "x-kargoplex-scope": "documents:write",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "JOB",
+                          "CLEARANCE",
+                          "QUOTE",
+                          "PARTY_KYC",
+                          "PARTNER_DD"
+                        ]
+                      },
+                      "id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "toPartyId": {
+                    "type": "string"
+                  },
+                  "recipient": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "templateId": {
+                    "type": "string"
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "typeKey": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string"
+                        },
+                        "required": {
+                          "type": "boolean"
+                        },
+                        "note": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "typeKey",
+                        "label"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "dueDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "send": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "subject"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "description": "The resource or page (see the guide for its fields)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "name: Required",
+                  "detail": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, revoked or expired API key (one message for all).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_INVALID",
+                  "error": "Invalid, revoked or expired API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The plan's monthly API calls are used up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "ENTITLEMENT_LIMIT_REACHED",
+                  "error": "You've reached your API call limit."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks this scope, or the plan lacks the API feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_SCOPE_REQUIRED",
+                  "error": "This API key does not have the 'documents:write' scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found among your company's records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many calls: the per-key or the per-company limit a minute. Wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "RATE_LIMITED",
+                  "error": "Too many requests for this API key — slow down"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/document-requests/{id}": {
+      "get": {
+        "operationId": "document_requests_get",
+        "tags": [
+          "Document requests"
+        ],
+        "summary": "Get a document request",
+        "description": "Get one document request by id.\n\nRequires the `documents:read` scope and the plan's `apiRead` feature.",
+        "security": [
+          {
+            "apiKey": [
+              "documents:read"
+            ]
+          }
+        ],
+        "x-kargoplex-scope": "documents:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "description": "The resource or page (see the guide for its fields)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "name: Required",
+                  "detail": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, revoked or expired API key (one message for all).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_INVALID",
+                  "error": "Invalid, revoked or expired API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The plan's monthly API calls are used up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "ENTITLEMENT_LIMIT_REACHED",
+                  "error": "You've reached your API call limit."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks this scope, or the plan lacks the API feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_SCOPE_REQUIRED",
+                  "error": "This API key does not have the 'documents:read' scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found among your company's records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many calls: the per-key or the per-company limit a minute. Wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "RATE_LIMITED",
+                  "error": "Too many requests for this API key — slow down"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices": {
+      "get": {
+        "operationId": "invoices_list",
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "List customer invoices",
+        "description": "List your customer invoices (built from job charge lines). Filter by status or jobId.\n\nRequires the `invoices:read` scope and the plan's `apiRead` feature.",
+        "security": [
+          {
+            "apiKey": [
+              "invoices:read"
+            ]
+          }
+        ],
+        "x-kargoplex-scope": "invoices:read",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "DRAFT",
+                "SENT",
+                "ACCEPTED",
+                "REJECTED",
+                "PARTIAL",
+                "PAID",
+                "OVERDUE",
+                "WITHDRAWN",
+                "CANCELLED",
+                "WRITTEN_OFF"
+              ]
+            }
+          },
+          {
+            "name": "jobId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "description": "The resource or page (see the guide for its fields)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "name: Required",
+                  "detail": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, revoked or expired API key (one message for all).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_INVALID",
+                  "error": "Invalid, revoked or expired API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The plan's monthly API calls are used up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "ENTITLEMENT_LIMIT_REACHED",
+                  "error": "You've reached your API call limit."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks this scope, or the plan lacks the API feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_SCOPE_REQUIRED",
+                  "error": "This API key does not have the 'invoices:read' scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found among your company's records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many calls: the per-key or the per-company limit a minute. Wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "RATE_LIMITED",
+                  "error": "Too many requests for this API key — slow down"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/{id}": {
+      "get": {
+        "operationId": "invoices_get",
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Get a customer invoice",
+        "description": "Get one customer invoice by id.\n\nRequires the `invoices:read` scope and the plan's `apiRead` feature.",
+        "security": [
+          {
+            "apiKey": [
+              "invoices:read"
+            ]
+          }
+        ],
+        "x-kargoplex-scope": "invoices:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "description": "The resource or page (see the guide for its fields)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "name: Required",
+                  "detail": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, revoked or expired API key (one message for all).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_INVALID",
+                  "error": "Invalid, revoked or expired API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The plan's monthly API calls are used up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "ENTITLEMENT_LIMIT_REACHED",
+                  "error": "You've reached your API call limit."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks this scope, or the plan lacks the API feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "API_KEY_SCOPE_REQUIRED",
+                  "error": "This API key does not have the 'invoices:read' scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found among your company's records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many calls: the per-key or the per-company limit a minute. Wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "code": "RATE_LIMITED",
+                  "error": "Too many requests for this API key — slow down"
+                }
+              }
+            },
+            "headers": {
+              "RateLimit": {
+                "description": "Remaining calls in the current window (IETF draft-7 combined header: limit, remaining, reset).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "RateLimit-Policy": {
+                "description": "The limit and window that apply.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "kp_live_<prefix>_<secret>",
+        "description": "A secret API key. Scopes: parties:read, parties:write, quotes:read, quotes:write, jobs:read, jobs:write, documents:read, documents:write, invoices:read. Never use one in a browser."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "success",
+          "error"
+        ],
+        "properties": {
+          "success": {
+            "const": false
+          },
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "detail": {
+            "description": "Validation detail, on a 400."
+          }
+        }
+      }
+    }
+  }
+}

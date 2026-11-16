@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kargoplex"
+version = "0.1.0"
+description = "Official Python SDK for the Kargoplex public API."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+dependencies = []
+keywords = ["kargoplex", "freight", "logistics", "api", "sdk"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://kargoplex.com/developers"
+Repository = "https://github.com/Kargoplex/kargoplex-sdks"
+Issues = "https://github.com/Kargoplex/kargoplex-sdks/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["kargoplex"]
+
+[tool.hatch.build.targets.sdist]
+include = ["kargoplex", "tests", "README.md", "LICENSE"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
