@@ -9,7 +9,7 @@ import {
   type RequestFn,
 } from "./generated.js";
 
-export const VERSION = "0.1.0";
+export const VERSION = "0.1.1";
 export const DEFAULT_BASE_URL = "https://server.kargoplex.com/kargoplex/api/public/v1";
 
 const MAX_BACKOFF_MS = 8000;
@@ -94,7 +94,9 @@ export class Kargoplex {
   constructor(options: KargoplexOptions) {
     if (!options || !options.apiKey) throw new Error("Kargoplex: apiKey is required");
     this.apiKey = options.apiKey;
-    this.baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
+    let baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
+    while (baseUrl.endsWith("/")) baseUrl = baseUrl.slice(0, -1);
+    this.baseUrl = baseUrl;
     this.maxRetries = options.maxRetries ?? 3;
     this.timeoutMs = options.timeoutMs ?? 30000;
     const f = options.fetch ?? (globalThis as { fetch?: FetchLike }).fetch;
