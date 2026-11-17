@@ -99,10 +99,22 @@ test("never retries a POST that got a 5xx", async () => {
   assert.equal(fetch.calls.length, 1);
 });
 
-test("retries network errors, including for POST", async () => {
+test("retries network errors for GET", async () => {
   const { client, fetch } = make([new TypeError("fetch failed"), ok({ _id: "1" })]);
-  await client.parties.create({ name: "Acme" });
+  await client.parties.get("a");
   assert.equal(fetch.calls.length, 2);
+});
+
+test("a POST is re-sent only when the connection never opened", async () => {
+  const refused = Object.assign(new TypeError("fetch failed"), { cause: Object.assign(new Error("connect"), { code: "ECONNREFUSED" }) });
+  const retried = make([refused, ok({ _id: "1" })]);
+  await retried.client.parties.create({ name: "Acme" });
+  assert.equal(retried.fetch.calls.length, 2);
+
+  const reset = Object.assign(new TypeError("fetch failed"), { cause: Object.assign(new Error("socket"), { code: "ECONNRESET" }) });
+  const once = make([reset, ok({ _id: "1" })]);
+  await assert.rejects(once.client.parties.create({ name: "Acme" }), (err) => err instanceof KargoplexError && err.code === "NETWORK_ERROR");
+  assert.equal(once.fetch.calls.length, 1);
 });
 
 test("network errors surface as KargoplexError after retries", async () => {

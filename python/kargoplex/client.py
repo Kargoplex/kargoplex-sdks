@@ -175,8 +175,10 @@ class Kargoplex:
                 status, resp_headers, raw = self._transport(method, url, headers, data, self._timeout)
             except OSError as err:
                 timed_out = isinstance(err, TimeoutError) or isinstance(err, socket.timeout)
-                # A timed-out write may have been processed, so it is never re-sent.
-                if can_retry and not (timed_out and not is_get):
+                # A write is re-sent only when the connection never opened, so the server can't have
+                # seen it. Any other failure (a reset, a timeout) may come after it was processed.
+                never_connected = isinstance(err, (ConnectionRefusedError, socket.gaierror))
+                if can_retry and (is_get or (not timed_out and never_connected)):
                     self._sleep(self._backoff(attempt))
                     attempt += 1
                     continue

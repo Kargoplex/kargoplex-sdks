@@ -16,6 +16,16 @@ const MAX_BACKOFF_MS = 8000;
 const BASE_BACKOFF_MS = 500;
 const MAX_RETRY_AFTER_MS = 60_000;
 
+/** The connection was refused or the host didn't resolve: nothing reached the server. */
+function neverConnected(err: unknown): boolean {
+  const codes = new Set(["ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN"]);
+  let e: any = err;
+  for (let i = 0; e && i < 3; i++, e = e.cause) {
+    if (typeof e.code === "string" && codes.has(e.code)) return true;
+  }
+  return false;
+}
+
 export class KargoplexError extends Error {
   /** HTTP status, or 0 when no response arrived (network error or timeout). */
   readonly status: number;
@@ -164,8 +174,9 @@ export class Kargoplex {
         text = await res.text();
       } catch (err) {
         const timedOut = controller.signal.aborted;
-        // A timed-out write may have been processed, so it is never re-sent.
-        if (canRetry && !(timedOut && !isGet)) {
+        // A write is re-sent only when the connection never opened, so the server can't have seen it.
+        // Any other failure (a reset, a timeout) may come after the server processed it.
+        if (canRetry && (isGet || (!timedOut && neverConnected(err)))) {
           await this.sleep(this.backoff(attempt));
           continue;
         }
