@@ -98,10 +98,22 @@ def test_never_retries_post_5xx():
     assert len(fake.calls) == 1
 
 
-def test_retries_network_errors_including_post():
+def test_retries_network_errors_for_get():
     client, fake, _ = make([ConnectionError("reset"), ok({"_id": "1"})])
+    client.parties.get("a")
+    assert len(fake.calls) == 2
+
+
+def test_post_resent_only_when_never_connected():
+    client, fake, _ = make([ConnectionRefusedError("refused"), ok({"_id": "1"})])
     client.parties.create({"name": "Acme"})
     assert len(fake.calls) == 2
+
+    client, fake, _ = make([ConnectionResetError("reset"), ok({"_id": "1"})])
+    with pytest.raises(KargoplexError) as exc:
+        client.parties.create({"name": "Acme"})
+    assert exc.value.code == "NETWORK_ERROR"
+    assert len(fake.calls) == 1
 
 
 def test_network_error_surfaces_after_retries():
