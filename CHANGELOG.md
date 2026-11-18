@@ -2,6 +2,10 @@
 
 All notable changes to the SDKs. Both packages share a version number and are released together.
 
+## 0.1.2 - 2026-11-18
+
+- A failed write (POST, PUT, PATCH, DELETE) is retried only when the connection never opened (connection refused or DNS failure). A write that failed after it was sent may already have been processed, so retrying it could create a second quote or job. Reads still retry on any network error.
+
 ## 0.1.1 - 2026-11-16
 
 - First release through the release workflow. npm releases are staged and go live after a maintainer approves them on npmjs.com.
