@@ -9,7 +9,7 @@ import {
   type RequestFn,
 } from "./generated.js";
 
-export const VERSION = "0.1.1";
+export const VERSION = "0.1.2";
 export const DEFAULT_BASE_URL = "https://server.kargoplex.com/kargoplex/api/public/v1";
 
 const MAX_BACKOFF_MS = 8000;
